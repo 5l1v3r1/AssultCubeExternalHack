@@ -6,83 +6,102 @@
 #include <vector>
 #include <Windows.h>
 #include "proc.h"
-
+#include "mem.h"
 
 int main()
 {
-	// Get processId of target process
+	HANDLE hProcess = nullptr;
+	uintptr_t
+		moduleBase = 0,
+		localPlayerPtr = 0,
+		healthAddr = 0,
+		rifleAmmoAddr = 0,
+		pistalAmmoAddr = 0,
+		grenadeAddr = 0;
+
+
+	bool healthSwitch = false;
+	bool rifleAmmoSwitch = false;
+	bool pistalAmmoSwitch = false;
+	bool grenadeSwitch = false;
+
+
+
+	const int newValue = 1337;
+
 	DWORD procId = GetProcId(L"ac_client.exe");
 
-	// GetModuleBaseAddress
-	uintptr_t moduleBase = GetModuleBaseAddress(procId, L"ac_client.exe");
-
-	// Get handle to process
-	HANDLE hProcess = nullptr;
-	hProcess = OpenProcess(PROCESS_ALL_ACCESS, NULL, procId);
-
-	// Resolve base address of the point
-	uintptr_t dynamicPointerBaseAddress = moduleBase + 0x10F4F4;
-	std::cout << "DynamicPointerBaseAddress = " << "0x" << std::hex << dynamicPointerBaseAddress << std::endl;
-
-
-	while (true)
+	if (procId)
 	{
-		// resolve offset of hack
-		std::vector<unsigned int> healthOffsets = {0xf8};
-		uintptr_t healthAddr = FindDMAAddy(hProcess, dynamicPointerBaseAddress, healthOffsets);
-		std::cout << "healthAddr = " << "0x" << std::hex << healthAddr << std::endl;
-		// RPM
-		int healthValue = 0;
-		ReadProcessMemory(hProcess, (BYTE*)healthAddr, &healthValue, sizeof(healthValue), nullptr);
-		std::cout << "Current Health value = " << std::dec << healthValue << std::endl;
-		// WPM
-		int newHealth = 100;
-		WriteProcessMemory(hProcess, (BYTE*)healthAddr, &newHealth, sizeof(int), nullptr);
-
-
-		//------------------------------------------------------------
-
-		// resolve offset of hack
-		std::vector<unsigned int> rifleOffsets = {0x150};
-		uintptr_t rifleAddr = FindDMAAddy(hProcess, dynamicPointerBaseAddress, rifleOffsets);
-		std::cout << "rifleAddr = " << "0x" << std::hex << rifleAddr << std::endl;
-		// RPM
-		int rifleValue = 0;
-		ReadProcessMemory(hProcess, (BYTE*)rifleValue, &rifleValue, sizeof(rifleValue), nullptr);
-		std::cout << "Current Rifle value = " << std::dec << rifleValue << std::endl;
-		// WPM
-		int newRifle = 100;
-		WriteProcessMemory(hProcess, (BYTE*)rifleAddr, &newRifle, sizeof(int), nullptr);
-
-
-
-
-		// resolve offset of hack
-		std::vector<unsigned int> granadeOffsets = {0x158};
-		uintptr_t granadeAddr = FindDMAAddy(hProcess, dynamicPointerBaseAddress, granadeOffsets);
-		std::cout << "granadeAddr = " << "0x" << std::hex << granadeAddr << std::endl;
-		// RPM
-		int granadeValue = 0;
-		ReadProcessMemory(hProcess, (BYTE*)granadeValue, &granadeValue, sizeof(int), nullptr);
-		std::cout << "Current Granade value = " << std::dec << granadeValue << std::endl;
-		// WPM
-		int newGranade = 100;
-		WriteProcessMemory(hProcess, (BYTE*)granadeAddr, &newGranade, sizeof(int), nullptr);
-
-
-
-
-
-		// resolve offset of hack
-		std::vector<unsigned int> pistalOffsets = { 0x13c };
-		uintptr_t pistalAddr = FindDMAAddy(hProcess, dynamicPointerBaseAddress, pistalOffsets);
-		std::cout << "pistalAddr = " << "0x" << std::hex << pistalAddr << std::endl;
-		// RPM
-		int pistalValue = 0;
-		ReadProcessMemory(hProcess, (BYTE*)pistalValue, &pistalValue, sizeof(int), nullptr);
-		std::cout << "Current Pistal value = " << std::dec << pistalValue << std::endl;
-		// WPM
-		int newPistal = 100;
-		WriteProcessMemory(hProcess, (BYTE*)pistalAddr, &newPistal, sizeof(int), nullptr);
+		hProcess = OpenProcess(PROCESS_ALL_ACCESS, NULL, procId);
+		moduleBase = GetModuleBaseAddress(procId, L"ac_client.exe");
+		localPlayerPtr = moduleBase + 0x10F4F4;
+		healthAddr = FindDMAAddy(hProcess, localPlayerPtr, {0xf8});
+		rifleAmmoAddr = FindDMAAddy(hProcess, localPlayerPtr, {0x150});
+		pistalAmmoAddr = FindDMAAddy(hProcess, localPlayerPtr, {0x13c});
+		grenadeAddr = FindDMAAddy(hProcess, localPlayerPtr, {0x158});
+	}else
+	{
+		std::cout << "Process not found, press enter to exit\n";
+		getchar();
+		return 0;
 	}
+
+
+
+	DWORD dwExit = 0;
+
+	while (GetExitCodeProcess(hProcess, &dwExit) && dwExit == STILL_ACTIVE)
+	{
+		
+		if(GetAsyncKeyState(VK_NUMPAD1) & 1)
+		{
+			healthSwitch = !healthSwitch;
+			if(healthSwitch)
+			{
+				WriteProcessMemory(hProcess, (BYTE*)healthAddr, &newValue, sizeof(int), nullptr);
+			}
+		}
+
+		if (GetAsyncKeyState(VK_NUMPAD2) & 1)
+		{
+			rifleAmmoSwitch = !rifleAmmoSwitch;
+			if (rifleAmmoSwitch)
+			{
+				WriteProcessMemory(hProcess, (BYTE*)rifleAmmoAddr, &newValue, sizeof(int), nullptr);
+			}
+		}
+
+		if (GetAsyncKeyState(VK_NUMPAD3) & 1)
+		{
+			pistalAmmoSwitch = !pistalAmmoSwitch;
+			if (pistalAmmoSwitch)
+			{
+				WriteProcessMemory(hProcess, (BYTE*)pistalAmmoAddr, &newValue, sizeof(int), nullptr);
+			}
+		}
+
+		if (GetAsyncKeyState(VK_NUMPAD4) & 1)
+		{
+			grenadeSwitch = !grenadeSwitch;
+			if (grenadeSwitch)
+			{
+				WriteProcessMemory(hProcess, (BYTE*)grenadeAddr, &newValue, sizeof(int), nullptr);
+			}
+		}
+
+
+		if (GetAsyncKeyState(VK_INSERT) & 1)
+		{
+			return 0;
+		}
+
+
+		Sleep(10);
+
+
+	}
+	std::cout << "Process not found, press enter to exit\n";
+
+
 }

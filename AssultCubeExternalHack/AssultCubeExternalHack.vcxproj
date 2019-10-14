@@ -152,11 +152,13 @@
     </Link>
   </ItemDefinitionGroup>
   <ItemGroup>
+    <ClInclude Include="mem.h" />
     <ClInclude Include="pch.h" />
     <ClInclude Include="proc.h" />
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="AssultCubeExternalHack.cpp" />
+    <ClCompile Include="mem.cpp" />
     <ClCompile Include="pch.cpp">
       <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">Create</PrecompiledHeader>
       <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">Create</PrecompiledHeader>
